@@ -12,7 +12,14 @@ $app = Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        /**
+         * The deployment sits behind a platform proxy that terminates TLS and
+         * forwards the request over HTTP. Without trusting it, Laravel builds
+         * asset and redirect URLs with an http:// scheme, which browsers then
+         * block as mixed content on an https:// page. The proxy has no fixed
+         * address, so every forwarding hop is trusted.
+         */
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
