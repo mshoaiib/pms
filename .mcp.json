@@ -1,0 +1,19 @@
+{
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "php",
+            "args": [
+                "artisan",
+                "boost:mcp"
+            ]
+        },
+        "pms": {
+            "command": "php",
+            "args": [
+                "artisan",
+                "mcp:start",
+                "pms"
+            ]
+        }
+    }
+}
