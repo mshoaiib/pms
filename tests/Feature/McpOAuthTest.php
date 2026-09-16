@@ -70,3 +70,28 @@ it('serves a caller holding an oauth access token', function () {
         ->assertOk()
         ->assertJsonPath('result.tools.0.name', 'list-workspaces');
 });
+
+it('renders the consent screen for a signed-in user', function () {
+    $client = (string) Str::uuid();
+    DB::table('oauth_clients')->insert([
+        'id' => $client,
+        'name' => 'Claude',
+        'redirect_uris' => json_encode(['https://claude.ai/api/mcp/auth_callback']),
+        'grant_types' => json_encode(['authorization_code', 'refresh_token']),
+        'revoked' => false,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $response = $this->actingAs(User::factory()->create())
+        ->get('/oauth/authorize?'.http_build_query([
+            'client_id' => $client,
+            'redirect_uri' => 'https://claude.ai/api/mcp/auth_callback',
+            'response_type' => 'code',
+            'scope' => 'mcp:use',
+            'code_challenge' => 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM',
+            'code_challenge_method' => 'S256',
+        ]), ['Accept' => 'text/html']);
+
+    $response->assertOk()->assertSee('Authorize Claude');
+});
