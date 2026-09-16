@@ -37,6 +37,28 @@ it('points a rejected call at the discovery document', function () {
         ->toContain('resource_metadata=');
 });
 
+it('sends an unauthenticated consent request to the login page', function () {
+    $client = (string) Str::uuid();
+    DB::table('oauth_clients')->insert([
+        'id' => $client,
+        'name' => 'Test Client',
+        'redirect_uris' => json_encode(['https://claude.ai/api/mcp/auth_callback']),
+        'grant_types' => json_encode(['authorization_code', 'refresh_token']),
+        'revoked' => false,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $this->get('/oauth/authorize?'.http_build_query([
+        'client_id' => $client,
+        'redirect_uri' => 'https://claude.ai/api/mcp/auth_callback',
+        'response_type' => 'code',
+        'scope' => 'mcp:use',
+        'code_challenge' => 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM',
+        'code_challenge_method' => 'S256',
+    ]), ['Accept' => 'text/html'])->assertRedirect(route('filament.admin.auth.login'));
+});
+
 it('serves a caller holding an oauth access token', function () {
     Passport::actingAs(User::factory()->create());
 

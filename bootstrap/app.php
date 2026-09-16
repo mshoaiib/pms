@@ -21,6 +21,14 @@ $app = Application::configure(basePath: dirname(__DIR__))
          * address, so every forwarding hop is trusted.
          */
         $middleware->trustProxies(at: '*');
+
+        /**
+         * There is no route named "login" in this application; the only way in
+         * is the Filament panel. Without this, an unauthenticated visit to the
+         * OAuth consent screen has nowhere to go, which is what an MCP client
+         * hits on the first step of the authorization flow.
+         */
+        $middleware->redirectGuestsTo(fn () => route('filament.admin.auth.login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
