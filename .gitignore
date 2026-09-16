@@ -30,3 +30,6 @@ Thumbs.db
 
 /.vercel
 .neon
+
+.vercel
+.env*
