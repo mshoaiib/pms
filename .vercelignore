@@ -1,0 +1,16 @@
+# Secrets never leave the machine; Vercel supplies env vars of its own.
+.env
+.env.*
+
+# Not needed at runtime.
+tests
+node_modules
+storage/logs
+storage/framework/cache
+storage/framework/sessions
+storage/framework/views
+.git
+.ai
+.claude
+.phpunit.cache
+phpunit.xml

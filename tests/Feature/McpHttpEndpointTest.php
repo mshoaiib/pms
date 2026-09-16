@@ -9,18 +9,31 @@ use Maya719\ClickUp\Resources\Spaces;
 uses(RefreshDatabase::class);
 
 /**
+ * The bearer token the HTTP transport is guarded by for the duration of a test.
+ */
+const MCP_TEST_TOKEN = 'mcp-test-token';
+
+beforeEach(function (): void {
+    config(['mcp.token' => MCP_TEST_TOKEN]);
+});
+
+/**
  * The JSON-RPC call the Postman collection makes.
  *
  * @param  array<string, mixed>  $params
+ * @param  array<string, string>  $headers
  */
-function callMcp(string $method, array $params = [], int $id = 1): TestResponse
+function callMcp(string $method, array $params = [], int $id = 1, array $headers = []): TestResponse
 {
     return test()->postJson('/mcp/pms', array_filter([
         'jsonrpc' => '2.0',
         'id' => $id,
         'method' => $method,
         'params' => $params ?: null,
-    ]), ['Accept' => 'application/json, text/event-stream']);
+    ]), array_merge([
+        'Accept' => 'application/json, text/event-stream',
+        'Authorization' => 'Bearer '.MCP_TEST_TOKEN,
+    ], $headers));
 }
 
 /**
@@ -46,6 +59,27 @@ it('answers the initialize handshake with a session id', function () {
 
 it('only accepts posts', function () {
     $this->get('/mcp/pms')->assertStatus(405);
+});
+
+it('rejects a call carrying no token', function () {
+    callMcp('tools/list', headers: ['Authorization' => ''])->assertUnauthorized();
+});
+
+it('rejects a call carrying the wrong token', function () {
+    callMcp('tools/list', headers: ['Authorization' => 'Bearer not-the-token'])
+        ->assertUnauthorized();
+});
+
+it('serves nothing when no token is configured', function () {
+    config(['mcp.token' => null]);
+
+    callMcp('tools/list')->assertUnauthorized();
+});
+
+it('challenges a rejected call so a client knows to authenticate', function () {
+    $response = callMcp('tools/list', headers: ['Authorization' => ''])->assertUnauthorized();
+
+    expect($response->headers->get('WWW-Authenticate'))->toContain('Bearer realm="mcp"');
 });
 
 it('exposes every pms tool on one page over http', function () {
