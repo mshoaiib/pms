@@ -2,6 +2,16 @@
 .env
 .env.*
 
+# Rebuilt in /tmp at runtime (see api/index.php). The local copies name dev-only
+# providers such as Laravel Boost, which composer strips with --no-dev, and carry
+# a config cache holding this machine's sqlite connection.
+bootstrap/cache
+
+# The runtime runs `composer install --no-dev` from composer.lock. Shipping the
+# local vendor/ hands it a tree that already contains dev packages, so package
+# discovery records Laravel Boost and the server then fails to load it.
+vendor
+
 # Not needed at runtime.
 tests
 node_modules

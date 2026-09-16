@@ -5,7 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 
-return Application::configure(basePath: dirname(__DIR__))
+$app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
@@ -19,3 +19,17 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
     })->create();
+
+/**
+ * Relocate the bootstrap directory when LARAVEL_BOOTSTRAP_PATH is set.
+ *
+ * Laravel writes its package and service manifests into bootstrap/cache on the
+ * first request. On a read-only deployment that write fails, so the serverless
+ * entry point points this at a writable directory and the manifests are rebuilt
+ * from the packages actually installed there, rather than from a stale copy.
+ */
+if (is_string($bootstrapPath = $_ENV['LARAVEL_BOOTSTRAP_PATH'] ?? null) && $bootstrapPath !== '') {
+    $app->useBootstrapPath($bootstrapPath);
+}
+
+return $app;
